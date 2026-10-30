@@ -15,9 +15,12 @@ import java.util.function.Supplier;
 /**
  * Command line entry point of the NinjaForms Element Generator.
  *
+ * <p>The build target is the WordPress plugin upload zip - the file the
+ * wp-admin plugin installer accepts. It is always written to
+ * &lt;out&gt;/&lt;plugin-slug&gt;.zip, next to the unpacked plugin folder.</p>
+ *
  * <pre>
- *   mvn -q exec:java                                # generate the timezone plugin into ./dist
- *   mvn -q exec:java -Dexec.args="--zip"           # ... and produce an installable .zip
+ *   mvn -q exec:java                                # generate dist/ninjaforms-timezone.zip
  *   mvn -q exec:java -Dexec.args="--out /tmp/gen"  # custom output directory
  *   mvn -q exec:java -Dexec.args="--list"          # list the built-in elements
  * </pre>
@@ -35,13 +38,11 @@ public final class Main
     {
         String elementName = "timezone";
         Path outputDir = Path.of( "dist" );
-        boolean zip = false;
 
         for ( int i = 0; i < args.length; i++ ) {
             switch ( args[ i ] ) {
                 case "--element" -> elementName = valueOf( args, ++i, "--element" );
                 case "--out"     -> outputDir = Path.of( valueOf( args, ++i, "--out" ) );
-                case "--zip"     -> zip = true;
                 case "--list"    -> { listElements(); return; }
                 case "--help"    -> { printUsage(); return; }
                 default          -> { unknownArgument( args[ i ] ); return; }
@@ -58,11 +59,10 @@ public final class Main
         try {
             List<Path> files = new PhpPluginGenerator().generate( plugin, outputDir );
             files.forEach( file -> System.out.println( "wrote " + file ) );
-            if ( zip ) {
-                Path zipFile = outputDir.resolve( plugin.getPluginSlug() + ".zip" );
-                Zipper.zipDirectory( outputDir.resolve( plugin.getPluginSlug() ), zipFile );
-                System.out.println( "wrote " + zipFile );
-            }
+            // The build target: the zip the WordPress plugin installer accepts.
+            Path zipFile = outputDir.resolve( plugin.getPluginSlug() + ".zip" );
+            Zipper.zipDirectory( outputDir.resolve( plugin.getPluginSlug() ), zipFile );
+            System.out.println( "wrote " + zipFile );
         } catch ( IOException e ) {
             System.err.println( "Generation failed: " + e.getMessage() );
             System.exit( 1 );
@@ -100,8 +100,10 @@ public final class Main
             Arguments:
               --element <name>   Built-in element to generate (default: timezone)
               --out <dir>        Output directory (default: dist)
-              --zip              Also write an installable plugin .zip
               --list             List the built-in elements
-              --help             Show this help""" );
+              --help             Show this help
+
+            The WordPress plugin upload zip is always written to
+            <out>/<plugin-slug>.zip (default: dist/ninjaforms-timezone.zip).""" );
     }
 }

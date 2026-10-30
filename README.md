@@ -32,11 +32,13 @@ NinjaFormsTimeZone/
 
 ```bash
 mvn package                                   # build + run the unit tests
-mvn -q exec:java                              # generate the timezone plugin into ./dist
-mvn -q exec:java -Dexec.args="--zip"          # ... and write dist/ninjaforms-timezone.zip
+mvn -q exec:java                              # write dist/ninjaforms-timezone.zip (installable plugin)
 mvn -q exec:java -Dexec.args="--out /somewhere --element timezone"
 mvn -q exec:java -Dexec.args="--list"        # list built-in elements
 ```
+
+The build target is the WordPress plugin upload zip - `dist/ninjaforms-timezone.zip` -
+the file the wp-admin plugin installer accepts.
 
 Generated output (mirrors how Ninja Forms' own extensions are structured):
 
@@ -47,12 +49,20 @@ dist/ninjaforms-timezone/
 └── templates/fields-nftz-timezone.html         front-end template (Underscore syntax)
 ```
 
-## Installing the generated plugin
+## Installing or updating the generated plugin
 
-1. `mvn -q exec:java -Dexec.args="--zip"` to produce `dist/ninjaforms-timezone.zip`.
-2. WordPress admin: Plugins → Add New → Upload Plugin → choose the zip → Activate.
+The target artifact is the zip WordPress accepts for plugin installation:
+`dist/ninjaforms-timezone.zip`.
+
+1. `mvn -q exec:java` writes the zip (plus the unpacked folder under
+   `dist/ninjaforms-timezone/`, if you prefer copying it into `wp-content/plugins/`).
+2. WordPress admin: Plugins → Add New → Upload Plugin → select the zip → Install Now → Activate.
 3. Ninja Forms builder: the **Timezone** field appears in the *Common Fields* palette.
    Drag it onto a form like any other field.
+
+To update an already-installed plugin: bump `version` in `TimeZoneElement.plugin()`,
+regenerate, and upload the new zip the same way - WordPress sees the higher version
+and offers to replace the installed one.
 
 Requirements: WordPress 5.9+, PHP 7.4+, Ninja Forms 3.x active.
 
